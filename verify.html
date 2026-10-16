@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Verify a Report · ISS Laboratory</title>
+<meta name="description" content="Check that an ISS Laboratory gemmological report is authentic.">
+<meta name="theme-color" content="#4b3fb0">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f4f5f9;--surface:#fff;--ink:#1c1d2b;--muted:#5f6178;--line:#dcdeea;--accent:#4b3fb0;--soft:#ebe9fa;--ok:#1f7a4d;--okbg:#e3f3ea;--bad:#b3261e;--badbg:#fbe4e2;
+  --display:"Bodoni Moda",Georgia,serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#12131c;--surface:#1b1c28;--ink:#ecebf5;--muted:#a3a4bb;--line:#2f3044;--accent:#a99cff;--soft:#2a2650;--ok:#5fd69a;--okbg:#173528;--bad:#ff8a80;--badbg:#3d1c1a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+.band{background:#4b3fb0;color:#fff;padding-block:22px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band .in{max-width:720px;margin:0 auto;display:flex;gap:14px;align-items:center}
+.band img{width:48px;height:48px;border-radius:8px;background:#fff;object-fit:contain;padding:3px}
+.band h1{margin:0;font:600 1.6rem var(--display)}
+.band p{margin:2px 0 0;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+main{max-width:720px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:12px}
+form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+@media (max-width:560px){form{grid-template-columns:1fr}}
+label{display:grid;gap:4px;font-size:.82rem;color:var(--muted);font-weight:500}
+input{font:inherit;font-family:var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 11px;width:100%;text-transform:uppercase}
+button{font:600 .9rem var(--body);border-radius:8px;padding:10px 18px;min-height:44px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{border-radius:10px;padding:12px 14px;font-weight:600}
+.status.ok{background:var(--okbg);color:var(--ok)}
+.status.bad{background:var(--badbg);color:var(--bad)}
+.res{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:18px}
+@media (max-width:560px){.res{grid-template-columns:1fr}}
+.res img{width:100%;max-width:180px;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+dl{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:4px 14px;margin:0}
+dt{color:var(--muted)} dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.concl{font:600 1.35rem var(--display)}
+.muted{color:var(--muted);font-size:.85rem}
+.no{font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header class="band"><div class="in"><img id="logo" src="icon-192.png" alt=""><div><h1 id="lab">ISS Laboratory</h1><p>Report verification</p></div></div></header>
+<main>
+  <section class="card">
+    <p style="margin:0">Enter the report number and verification code printed at the top of the report.</p>
+    <form id="f" novalidate>
+      <label>Report number<input id="rn" placeholder="ISSL-2026-0001" autocomplete="off"></label>
+      <label>Verification code<input id="vc" placeholder="6 characters" autocomplete="off" maxlength="12"></label>
+      <button type="submit">Check report</button>
+    </form>
+  </section>
+  <div id="out"></div>
+  <p class="muted">Only the stone's details and results are shown. The owner's personal details and any valuation amount are never published.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $=s=>document.querySelector(s);
+  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const cfg=window.ISS_CONFIG||{};
+  const sb=window.supabase && window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:false}});
+  async function check(rn,vc){
+    const out=$("#out");
+    if(!rn||!vc){ out.innerHTML=`<div class="status bad">Enter both the report number and the verification code.</div>`; return; }
+    out.innerHTML=`<p class="muted">Checking…</p>`;
+    const {data,error}=await sb.rpc("verify_lab_report",{p_report_no:rn,p_code:vc});
+    if(error){ out.innerHTML=`<div class="status bad">The check could not be completed. Please try again shortly.</div>`; return; }
+    if(!data){ out.innerHTML=`<div class="status bad">No issued report matches ${esc(rn)} with that code. Check both and try again, or contact the laboratory.</div>`; return; }
+    const d=data;
+    if(d.lab) $("#lab").textContent=d.lab;
+    if(d.logo) $("#logo").src=d.logo;
+    const concl=[d.origin, d.variety||d.species].filter(Boolean).join(" ")+(d.species&&d.variety?` (${d.species})`:"");
+    const rows=[["Item",d.setting==="mounted"?"Mounted stone":"Loose stone"],["Description",d.description],["Weight",d.weight?d.weight+" ct":""],["Measurements",d.measurements],
+      ["Shape and cut",d.shape_cut],["Colour",d.colour],["Species",d.species],["Variety",d.variety],["Treatment",d.treatment],["Refractive index",d.ri],["Optic character",d.optic],["Specific gravity",d.sg],
+      ["Insurance valuation",d.valuation_included?"Included in this report (amount not shown)":""]].filter(r=>r[1]);
+    out.innerHTML=`<div class="status ok">Authentic: this report was issued by ${esc(d.lab||"ISS Laboratory")} on ${esc(new Date(d.issued).toLocaleDateString("en-ZA",{day:"2-digit",month:"long",year:"numeric"}))}.</div>
+      <section class="card">
+        <div class="no">${esc(d.report_no)}</div>
+        <div class="concl">${esc(concl||"—")}</div>
+        <div class="res"><dl>${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+          ${d.photo?`<img src="${esc(d.photo)}" alt="Photo of the stone">`:""}</div>
+        <p class="muted" style="margin:0">Examined by ${esc(d.gemmologist||"")}, ${esc(d.credentials||"")}. Compare these details with the stone and the printed report.</p>
+      </section>`;
+  }
+  const p=new URLSearchParams(location.search);
+  if(p.get("report")) $("#rn").value=p.get("report");
+  if(p.get("code")) $("#vc").value=p.get("code");
+  $("#f").addEventListener("submit",e=>{ e.preventDefault(); check($("#rn").value.trim().toUpperCase(), $("#vc").value.trim().toUpperCase()); });
+  if(!sb){ $("#out").innerHTML=`<div class="status bad">The page could not load. Check your connection and reload.</div>`; return; }
+  if(p.get("report") && p.get("code")) check(p.get("report").toUpperCase(), p.get("code").toUpperCase());
+})();
+</script>
+</body>
+</html>

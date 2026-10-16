@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ISS Laboratory</title>
+<meta name="theme-color" content="#4b3fb0">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="loginView" class="login" hidden>
+  <form id="loginForm" novalidate>
+    <img class="mark" src="icon-192.png" alt="">
+    <h1>ISS Laboratory</h1>
+    <p class="muted" style="margin:0">Sign in with your Infinity CRM account.</p>
+    <label class="f">Email<input id="lEmail" type="email" autocomplete="username" required></label>
+    <label class="f" id="lPassWrap">Password<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <label class="f" id="lNewWrap" hidden>New password (at least 8 characters)<input id="lNew" type="password" autocomplete="new-password"></label>
+    <p id="lErr" class="err" hidden></p>
+    <p id="lMsg" class="muted small" style="margin:0" hidden></p>
+    <button class="btn primary" id="lSubmit" type="submit">Sign in</button>
+    <button class="btn ghost sm" id="lForgot" type="button">Forgot password?</button>
+  </form>
+</div>
+
+<div id="appView" hidden>
+  <header class="top"><div class="in">
+    <span class="brand">ISS Laboratory<small>Lab book</small></span>
+    <span class="who"><span id="whoName"></span><button class="btn sm ghost" id="signOut" type="button">Sign out</button></span>
+  </div></header>
+
+  <main class="wrap" id="app">
+    <div class="empty"><b>Opening the lab book…</b></div>
+  </main>
+
+  <nav class="tabs" aria-label="Sections"><div class="in">
+    <button id="tab-jobs" data-tab="jobs" aria-current="page">Jobs</button>
+    <button id="tab-new" data-tab="new">New take-in</button>
+    <button id="tab-remind" data-tab="remind">Reminders<span id="remBadge" class="badge" hidden></span></button>
+    <button id="tab-ledger" data-tab="ledger">Ledger</button>
+    <button id="tab-settings" data-tab="settings">Settings</button>
+  </div></nav>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
